@@ -8,7 +8,7 @@ var markers = []
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', (event) => {
-  initMap(); // added 
+  // initMap(); // added 
   fetchNeighborhoods();
   fetchCuisines();
 });
@@ -88,7 +88,7 @@ fillCuisinesHTML = (cuisines = self.cuisines) => {
 
 //   updateRestaurants();
 // }
- window.initMap = () => {
+initMap = () => {
   let loc = {
     lat: 40.722216,
     lng: -73.987501
