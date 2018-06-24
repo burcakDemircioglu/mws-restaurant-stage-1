@@ -99,7 +99,7 @@ initMap = () => {
     scrollwheel: false
   });
   updateRestaurants();
-} 
+}
 
 /**
  * Update page and map for current restaurants.
@@ -158,6 +158,7 @@ createRestaurantHTML = (restaurant) => {
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
+  image.alt = "image of " + restaurant.name;
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
   li.append(image);
 
@@ -175,9 +176,11 @@ createRestaurantHTML = (restaurant) => {
 
   const more = document.createElement('button');
   more.innerHTML = 'View Details';
-  more.onclick=function(){
+  more.setAttribute("aria-label", restaurant.name + " Restaurant View Details");
+
+  more.onclick = function () {
     const url = DBHelper.urlForRestaurant(restaurant);
-    window.location=url;
+    window.location = url;
   }
   li.append(more)
 
@@ -206,5 +209,5 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     });
     self.markers.push(marker);
   });
-} 
+}
 
