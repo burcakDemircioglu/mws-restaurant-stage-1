@@ -1,77 +1,62 @@
-var staticCacheName = 'mws-restaurant-s1';
-var contentImgsCache = 'mws-restaurant-s1-imgs';
-var allCaches = [
-  staticCacheName,
-  contentImgsCache
+// Names of the two caches used in this version of the service worker.
+// Change to v2, etc. when you update any of the local resources, which will
+// in turn trigger the install event again.
+const PRECACHE = 'precache-v1';
+const RUNTIME = 'runtime';
+
+// A list of local resources we always want to be cached.
+const PRECACHE_URLS = [
+  'index.html',
+  './', // Alias for index.html
+  'styles.css',
+  '../../styles/main.css',
+  'demo.js'
 ];
 
+// The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(staticCacheName).then(cache => {
-            return cache.addAll([
-                '/',
-                '/index.html',
-                '/restaurant.html',
-                '/js/',
-                '/js/main.js',
-                '/js/dbhelper.js',
-                '/js/main.js',
-                '/js/restaurant_info.js',
-                '/css/styles.css'
-            ]).catch(error => {
-                console.log("Catches open failed: " + error);
-            });
-        })
-    );
+  event.waitUntil(
+    caches.open(PRECACHE)
+      .then(cache => cache.addAll(PRECACHE_URLS))
+      .then(self.skipWaiting())
+  );
 });
 
+// The activate handler takes care of cleaning up old caches.
 self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.filter(cacheName => {
-                    return cacheName.startsWith('mws-restaurant-s1-') &&
-                        !allCaches.includes(cacheName);
-                }).map(cacheName => {
-                    return caches.delete(cacheName);
-                })
-            );
-        })
-    );
+  const currentCaches = [PRECACHE, RUNTIME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return cacheNames.filter(cacheName => !currentCaches.includes(cacheName));
+    }).then(cachesToDelete => {
+      return Promise.all(cachesToDelete.map(cacheToDelete => {
+        return caches.delete(cacheToDelete);
+      }));
+    }).then(() => self.clients.claim())
+  );
 });
 
+// The fetch handler serves responses for same-origin resources from a cache.
+// If no response is found, it populates the runtime cache with the response
+// from the network before returning it to the page.
 self.addEventListener('fetch', event => {
-    var requestUrl = new URL(event.request.url);
-
-    if (requestUrl.origin === location.origin) {
-        if (requestUrl.pathname === '/') {
-            event.respondWith(caches.match('/index.html'));
-            return;
-        }
-        if (requestUrl.pathname.startsWith('/img/')) {
-            event.respondWith(servePhoto(event.request));
-            return;
-        }
-    }
-
+  // Skip cross-origin requests, like those for Google Analytics.
+  if (event.request.url.startsWith(self.location.origin)) {
     event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request);
-        })
-    );
-});
+      caches.match(event.request).then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
 
-function servePhoto(request) {
-    var storageUrl = request.url.replace(/-\d+px\.jpg$/, '');
-
-    return caches.open(contentImgsCache).then(cache => {
-        return cache.match(storageUrl).then(response => {
-            if (response) return response;
-
-            return fetch(request).then(networkResponse => {
-                cache.put(storageUrl, networkResponse.clone());
-                return networkResponse;
+        return caches.open(RUNTIME).then(cache => {
+          return fetch(event.request).then(response => {
+            // Put a copy of the response in the runtime cache.
+            return cache.put(event.request, response.clone()).then(() => {
+              return response;
             });
+          });
         });
-    });
-}
+      })
+    );
+  }
+});
