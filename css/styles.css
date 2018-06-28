@@ -77,7 +77,7 @@ nav h1 a {
   letter-spacing: 10px;
   text-transform: uppercase;
 }
-#breadcrumb {
+#breadcrumb_ol {
   max-width: 1140px;
   padding: 10px 30px;
   list-style: none;
@@ -87,31 +87,31 @@ nav h1 a {
   width: 100%;
 }
 
-#breadcrumb a{
+#breadcrumb_ol a{
   min-width:48px;
   min-height:48px;
 }
 
 /* Display list items side by side */
-#breadcrumb li {
+#breadcrumb_ol li {
   display: inline;
 }
 
 /* Add a slash symbol (/) before/behind each list item */
-#breadcrumb li+li:before {
+#breadcrumb_ol li+li:before {
   padding: 8px;
   color: black;
   content: "/\00a0";
 }
 
 /* Add a color to all links inside the list */
-#breadcrumb li a {
+#breadcrumb_ol li a {
   color: #004c8f;
   text-decoration: none;
 }
 
 /* Add a color on mouse-over */
-#breadcrumb li a:hover {
+#breadcrumb_ol li a:hover {
   color: #01447e;
   text-decoration: underline;
 }
