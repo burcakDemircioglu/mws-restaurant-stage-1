@@ -3,6 +3,7 @@ const gulp = require('gulp');
 const gulpLoadPlugins = require('gulp-load-plugins');
 const browserify = require('browserify');
 const babelify = require('babelify');
+const source = require('vinyl-source-stream');
 const browserSync = require('browser-sync').create();
 const del = require('del');
 const wiredep = require('wiredep').stream;
@@ -57,8 +58,8 @@ gulp.task("sw", () => {
     .transform(babelify)
     .require("app/sw.js", { entry: true })
     .bundle()
-    .pipe(gulp.src("app/sw.js"))
-    .pipe(gulp.dest(".tmp"))
+    .pipe(source("sw.js"))
+    .pipe(gulp.dest('.tmp/'))
 })
 
 function lint(files) {

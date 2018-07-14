@@ -1,14 +1,5 @@
-if ('serviceWorker' in navigator) {
-	navigator.serviceWorker.register('../sw.js', { scope: '/' })
-		.then(reg => {
-			console.log("Service worker registration successful: " + reg.scope);
-		})
-		.catch(error => {
-			console.log("Registration failed: " + error)
-		})
-}
-
 import idb from 'idb';
+// var idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
 // Names of the two caches used in this version of the service worker.
 // Change to v2, etc. when you update any of the local resources, which will
 // in turn trigger the install event again.
@@ -26,6 +17,21 @@ const PRECACHE_URLS = [
     '/js/dbhelper.js',
     '/js/restaurant_info.js'
 ];
+
+function openDatabase() {
+    // If the browser doesn't support service worker,
+    // we don't care about having a database
+    if (!navigator.serviceWorker) {
+        return Promise.resolve();
+    }
+
+    return idb.open('mws-restaurant', 1, function (upgradeDb) {
+        var store = upgradeDb.createObjectStore('restaurants', {
+            keyPath: 'id'
+        });
+        store.createIndex('by-date', 'time');
+    });
+}
 
 // The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
