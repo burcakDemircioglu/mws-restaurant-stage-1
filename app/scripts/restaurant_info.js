@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 //   });
 // }  
 
-initMap = () => {
+function initMap () {
   fetchRestaurantFromURL((error, restaurant) => {
     if (error) { // Got an error!
       console.error(error);
@@ -54,7 +54,7 @@ initMap = () => {
 /**
  * Get current restaurant from page URL.
  */
-fetchRestaurantFromURL = (callback) => {
+function fetchRestaurantFromURL (callback) {
   if (self.restaurant) { // restaurant already fetched!
     callback(null, self.restaurant)
     return;
@@ -79,7 +79,7 @@ fetchRestaurantFromURL = (callback) => {
 /**
  * Create restaurant HTML and add it to the webpage
  */
-fillRestaurantHTML = (restaurant = self.restaurant) => {
+function fillRestaurantHTML (restaurant = self.restaurant) {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
 
@@ -88,10 +88,10 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
 
   const image = document.getElementById('restaurant-img');
   image.className = 'restaurant-img';
-  image.alt = "image of " + restaurant.name;
+  image.alt = 'image of ' + restaurant.name;
 
   var screenWidth = window.innerWidth;
-  console.log(screenWidth);
+  // console.log(screenWidth);
   if (screenWidth < 500) {
     // Load mobile image
     image.src = DBHelper.imageUrlForRestaurantSmall(restaurant);
@@ -117,7 +117,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
 /**
  * Create restaurant operating hours HTML table and add it to the webpage.
  */
-fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => {
+function fillRestaurantHoursHTML (operatingHours = self.restaurant.operating_hours) {
   const hours = document.getElementById('restaurant-hours');
   for (let key in operatingHours) {
     const row = document.createElement('tr');
@@ -137,7 +137,7 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+function fillReviewsHTML (reviews = self.restaurant.reviews) {
   const container = document.getElementById('reviews-container');
   if (!reviews) {
     const noReviews = document.createElement('p');
@@ -155,31 +155,31 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
 /**
  * Create review HTML and add it to the webpage.
  */
-createReviewHTML = (review) => {
+function createReviewHTML (review)  {
   const li = document.createElement('li');
 
   const div = document.createElement('div');
-  div.className = "review-header";
+  div.className = 'review-header';
 
   const name = document.createElement('p');
-  name.className = "reviewer";
+  name.className = 'reviewer';
   name.innerHTML = review.name;
   div.appendChild(name);
 
   const date = document.createElement('p');
-  date.className = "review-date";
+  date.className = 'review-date';
   date.innerHTML = review.date;
   div.appendChild(date);
 
   li.appendChild(div);
 
   const rating = document.createElement('div');
-  rating.className = "rating";
+  rating.className = 'rating';
   rating.innerHTML = `RATING: ${review.rating}`;
   li.appendChild(rating);
 
   const comments = document.createElement('p');
-  comments.className = "comment";
+  comments.className = 'comment';
   comments.innerHTML = review.comments;
   li.appendChild(comments);
 
@@ -189,18 +189,18 @@ createReviewHTML = (review) => {
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
-fillBreadcrumb = (restaurant = self.restaurant) => {
+function fillBreadcrumb (restaurant = self.restaurant) {
   const breadcrumb = document.getElementById('breadcrumb_ol');
   const li = document.createElement('li');
   li.innerHTML = restaurant.name;
-  li.setAttribute("aria-current", "page");
+  li.setAttribute('aria-current', 'page');
   breadcrumb.appendChild(li);
 }
 
 /**
  * Get a parameter by name from page URL.
  */
-getParameterByName = (name, url) => {
+function getParameterByName (name, url) {
   if (!url)
     url = window.location.href;
   name = name.replace(/[\[\]]/g, '\\$&');

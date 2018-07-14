@@ -13,16 +13,26 @@ const reload = browserSync.reload;
 
 let dev = true;
 
+// gulp.task('styles', () => {
+//   return gulp.src('app/styles/*.scss')
+//     .pipe($.plumber())
+//     .pipe($.if(dev, $.sourcemaps.init()))
+//     .pipe($.sass.sync({
+//       outputStyle: 'expanded',
+//       precision: 10,
+//       includePaths: ['.']
+//     }).on('error', $.sass.logError))
+//     .pipe($.autoprefixer({ browsers: ['> 1%', 'last 2 versions', 'Firefox ESR'] }))
+//     .pipe($.if(dev, $.sourcemaps.write()))
+//     .pipe(gulp.dest('.tmp/styles'))
+//     .pipe(reload({ stream: true }));
+// });
+
 gulp.task('styles', () => {
-  return gulp.src('app/styles/*.scss')
+  return gulp.src('app/styles/*.css')
     .pipe($.plumber())
     .pipe($.if(dev, $.sourcemaps.init()))
-    .pipe($.sass.sync({
-      outputStyle: 'expanded',
-      precision: 10,
-      includePaths: ['.']
-    }).on('error', $.sass.logError))
-    .pipe($.autoprefixer({ browsers: ['> 1%', 'last 2 versions', 'Firefox ESR'] }))
+    // .pipe($.babel())
     .pipe($.if(dev, $.sourcemaps.write()))
     .pipe(gulp.dest('.tmp/styles'))
     .pipe(reload({ stream: true }));
@@ -47,8 +57,8 @@ gulp.task("sw", () => {
     .transform(babelify)
     .require("app/sw.js", { entry: true })
     .bundle()
-    .pipe(source("sw.js"))
-    .pipe(gulp.dest(".tmp/"))
+    .pipe(gulp.src("app/sw.js"))
+    .pipe(gulp.dest(".tmp"))
 })
 
 function lint(files) {

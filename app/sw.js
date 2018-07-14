@@ -1,3 +1,14 @@
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('../sw.js', { scope: '/' })
+		.then(reg => {
+			console.log("Service worker registration successful: " + reg.scope);
+		})
+		.catch(error => {
+			console.log("Registration failed: " + error)
+		})
+}
+
+import idb from 'idb';
 // Names of the two caches used in this version of the service worker.
 // Change to v2, etc. when you update any of the local resources, which will
 // in turn trigger the install event again.
