@@ -14,14 +14,12 @@ const PRECACHE_URLS = [
     '/scripts/restaurant_info.js'
 ];
 
-const dbPromise = idb.open('mws-restaurant', 1, upgradeDb => {
+var dbPromise = idb.open('mws-restaurants', 1, upgradeDb => {
     switch (upgradeDb.oldVersion) {
         case 0:
-            upgradeDb.createObjectStore('restaurants', {
-                keyPath: 'id'
-            });
+            upgradeDb.createObjectStore('restaurants', { keyPath: 'id' })
     }
-});
+})
 
 // The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
@@ -52,26 +50,63 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     var requestUrl = new URL(event.request.url);
 
-    if (requestUrl.origin === location.origin) {
-        if (requestUrl.pathname === '/') {
-            event.respondWith(caches.match('/index.html'))
-            return;
+    if (requestUrl.port === "1337") {
+        // console.log('requestUrl: ' + requestUrl);
+        const parts = requestUrl.pathname.split("/");
+        const id = parts[parts.length - 1] === "restaurants" ? "-1" : parts[parts.length - 1];
+        // console.log('id: ' + id);
+        event.respondWith(
+            dbPromise.then(db => {
+                var tx = db.transaction('restaurants');
+                var restaurantsStore = tx.objectStore('restaurants');
+                return restaurantsStore.get(id);
+            }).then(data => {
+                console.log(data);
+                return ((data && data.data) || fetch(event.request)
+                    .then(fetchResponse => fetchResponse.json())
+                    .then(json => {
+                        console.log(json);
+                        return dbPromise.then(db => {
+
+                            const tx = db.transaction("restaurants", "readwrite");
+                            var restaurantsStore = tx.objectStore('restaurants');
+                            restaurantsStore.put({
+                                id: id,
+                                data: json
+                            });
+                            return json;
+                        });
+                    })
+                );
+            }).then(finalResponse => {
+                return new Response(JSON.stringify(finalResponse));
+            }).catch(error => {
+                return new Response("Error fetching data", { status: 500 });
+            }));
+
+    } else {
+        if (requestUrl.origin === location.origin) {
+            if (requestUrl.pathname === '/') {
+                event.respondWith(caches.match('/index.html'))
+                return;
+            }
+            if (requestUrl.pathname.startsWith('/images/')) {
+                event.respondWith(servePhoto(event.request))
+                return;
+            }
+            if (requestUrl.pathname.startsWith('/restaurant.html')) {
+                event.respondWith(caches.match('/restaurant.html'))
+                return;
+            }
         }
-        if (requestUrl.pathname.startsWith('/images/')) {
-            event.respondWith(servePhoto(event.request))
-            return;
-        }
-        if (requestUrl.pathname.startsWith('/restaurant.html')) {
-            event.respondWith(caches.match('/restaurant.html'))
-            return;
-        }
+
+        event.respondWith(
+            caches.match(event.request).then(response => {
+                return response || fetch(event.request);
+            })
+        )
     }
 
-    event.respondWith(
-        caches.match(event.request).then(response => {
-            return response || fetch(event.request);
-        })
-    )
 });
 
 function servePhoto(request) {
