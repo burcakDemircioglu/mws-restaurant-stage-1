@@ -1,8 +1,5 @@
 import idb from 'idb';
-// var idb = window.indexedDB || window.mozIndexedDB || window.webkitIndexedDB || window.msIndexedDB || window.shimIndexedDB;
-// Names of the two caches used in this version of the service worker.
-// Change to v2, etc. when you update any of the local resources, which will
-// in turn trigger the install event again.
+
 const PRECACHE = 'precache-v1';
 const RUNTIME = 'runtime';
 
@@ -11,27 +8,20 @@ const PRECACHE_URLS = [
     '/index.html',
     '/restaurant.html',
     '/', // Alias for index.html
-    '/css/styles.css',
-    '/images/',
-    '/js/main.js',
-    '/js/dbhelper.js',
-    '/js/restaurant_info.js'
+    '/styles/styles.css',
+    '/scripts/main.js',
+    '/scripts/dbhelper.js',
+    '/scripts/restaurant_info.js'
 ];
 
-function openDatabase() {
-    // If the browser doesn't support service worker,
-    // we don't care about having a database
-    if (!navigator.serviceWorker) {
-        return Promise.resolve();
+const dbPromise = idb.open('mws-restaurant', 1, upgradeDb => {
+    switch (upgradeDb.oldVersion) {
+        case 0:
+            upgradeDb.createObjectStore('restaurants', {
+                keyPath: 'id'
+            });
     }
-
-    return idb.open('mws-restaurant', 1, function (upgradeDb) {
-        var store = upgradeDb.createObjectStore('restaurants', {
-            keyPath: 'id'
-        });
-        store.createIndex('by-date', 'time');
-    });
-}
+});
 
 // The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
