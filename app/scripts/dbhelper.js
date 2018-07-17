@@ -30,8 +30,6 @@ class DBHelper {
    * Fetch a restaurant by its ID.
    */
   static fetchRestaurantById(id, callback) {
-    // fetch all restaurants with proper error handling.
-
     fetch(DBHelper.DATABASE_URL + '/' + id)
       .then(response => response.json())
       .then((restaurant) => {

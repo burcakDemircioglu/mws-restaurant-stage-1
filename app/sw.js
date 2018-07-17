@@ -61,7 +61,7 @@ self.addEventListener('fetch', event => {
                 var restaurantsStore = tx.objectStore('restaurants');
                 return restaurantsStore.get(id);
             }).then(data => {
-                console.log(data);
+                // console.log("data(" + id + "): " + data);
                 return ((data && data.data) || fetch(event.request)
                     .then(fetchResponse => fetchResponse.json())
                     .then(json => {
@@ -74,6 +74,15 @@ self.addEventListener('fetch', event => {
                                 id: id,
                                 data: json
                             });
+                            if (id == -1) {
+                                var i;
+                                for (i = 0; i < json.length; i++) {
+                                    restaurantsStore.put({
+                                        id: json[i].id + "",
+                                        data: json[i]
+                                    });
+                                }
+                            }
                             return json;
                         });
                     })
