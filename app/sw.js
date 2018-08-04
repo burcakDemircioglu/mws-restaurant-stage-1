@@ -8,7 +8,9 @@ const PRECACHE_URLS = [
     '/index.html',
     '/restaurant.html',
     '/', // Alias for index.html
-    '/styles/styles.css',
+    '/styles/main.css',
+    '/styles/detail.css',
+    '/styles/base.css',
     '/scripts/main.js',
     '/scripts/dbhelper.js',
     '/scripts/restaurant_info.js'
