@@ -56,6 +56,22 @@
     <!-- Beginning reviews -->
     <div id="reviews-container">
       <h3>Reviews</h3>
+      <form id="foo" >
+        <input id="restaurant_id" type="hidden" name="restaurant_id">
+        <label for="name">Name: </label>
+        <input id="name" type="text" name="name">
+
+        <br>
+        <label for="rating">Rating: </label>
+        <input id="rating" type="number" name="rating">
+
+        <br>
+        <label for="comment">Comment: </label>
+        <textarea id="comment" type="text" name="comments"></textarea>
+
+        <br>
+        <button id="button" type="submit" onclick="saveReview()">Save</button>
+      </form>
       <ul id="reviews-list"></ul>
     </div>
     <!-- End reviews -->

@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
 //   });
 // }  
 
-function initMap () {
+function initMap() {
   fetchRestaurantFromURL((error, restaurant) => {
     if (error) { // Got an error!
       console.error(error);
@@ -54,7 +54,7 @@ function initMap () {
 /**
  * Get current restaurant from page URL.
  */
-function fetchRestaurantFromURL (callback) {
+function fetchRestaurantFromURL(callback) {
   if (self.restaurant) { // restaurant already fetched!
     callback(null, self.restaurant)
     return;
@@ -79,7 +79,7 @@ function fetchRestaurantFromURL (callback) {
 /**
  * Create restaurant HTML and add it to the webpage
  */
-function fillRestaurantHTML (restaurant = self.restaurant) {
+function fillRestaurantHTML(restaurant = self.restaurant) {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
 
@@ -117,7 +117,7 @@ function fillRestaurantHTML (restaurant = self.restaurant) {
 /**
  * Create restaurant operating hours HTML table and add it to the webpage.
  */
-function fillRestaurantHoursHTML (operatingHours = self.restaurant.operating_hours) {
+function fillRestaurantHoursHTML(operatingHours = self.restaurant.operating_hours) {
   const hours = document.getElementById('restaurant-hours');
   for (let key in operatingHours) {
     const row = document.createElement('tr');
@@ -137,7 +137,7 @@ function fillRestaurantHoursHTML (operatingHours = self.restaurant.operating_hou
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-function fillReviewsHTML (reviews = self.restaurant.reviews) {
+function fillReviewsHTML(reviews = self.restaurant.reviews) {
   const container = document.getElementById('reviews-container');
   if (!reviews) {
     const noReviews = document.createElement('p');
@@ -146,6 +146,7 @@ function fillReviewsHTML (reviews = self.restaurant.reviews) {
     return;
   }
   const ul = document.getElementById('reviews-list');
+  document.getElementById("restaurant_id").value = self.restaurant.id;
   reviews.forEach(review => {
     ul.appendChild(createReviewHTML(review));
   });
@@ -155,7 +156,7 @@ function fillReviewsHTML (reviews = self.restaurant.reviews) {
 /**
  * Create review HTML and add it to the webpage.
  */
-function createReviewHTML (review)  {
+function createReviewHTML(review) {
   const li = document.createElement('li');
 
   const div = document.createElement('div');
@@ -168,7 +169,8 @@ function createReviewHTML (review)  {
 
   const date = document.createElement('p');
   date.className = 'review-date';
-  date.innerHTML = review.date;
+  var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
+  date.innerHTML = new Date(review.updatedAt).toLocaleDateString("en-US", options);
   div.appendChild(date);
 
   li.appendChild(div);
@@ -189,7 +191,7 @@ function createReviewHTML (review)  {
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
-function fillBreadcrumb (restaurant = self.restaurant) {
+function fillBreadcrumb(restaurant = self.restaurant) {
   const breadcrumb = document.getElementById('breadcrumb_ol');
   const li = document.createElement('li');
   li.innerHTML = restaurant.name;
@@ -200,7 +202,7 @@ function fillBreadcrumb (restaurant = self.restaurant) {
 /**
  * Get a parameter by name from page URL.
  */
-function getParameterByName (name, url) {
+function getParameterByName(name, url) {
   if (!url)
     url = window.location.href;
   name = name.replace(/[\[\]]/g, '\\$&');
@@ -211,4 +213,25 @@ function getParameterByName (name, url) {
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+const saveReview = () => {
+  // Get the data points for the review
+  const name = document.getElementById("name").value;
+  const rating = document.getElementById("rating").value;
+  const comment = document.getElementById("comment").value;
+
+  console.log("reviewName: ", name);
+
+  DBHelper.saveReview(self.restaurant.id, name, rating, comment, (error, review) => {
+    console.log("got saveReview callback");
+    if (error) {
+      console.log("Error saving review")
+    }
+    // Update the button onclick event
+    const btn = document.getElementById("button");
+    btn.onclick = event => saveReview();
+
+    window.location.href = "/restaurant.html?id=" + self.restaurant.id;
+  });
 }
