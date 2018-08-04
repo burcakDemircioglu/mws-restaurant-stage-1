@@ -163,9 +163,23 @@ function createRestaurantHTML(restaurant) {
   image.src = DBHelper.imageUrlForRestaurantSmall(restaurant);
   li.append(image);
 
+
   const name = document.createElement('h3');
   name.innerHTML = restaurant.name;
   li.append(name);
+
+  const fav_image = document.createElement('img');
+  fav_image.className = 'fav-icon';
+  if (restaurant.is_favorite) {
+    fav_image.alt = restaurant.name + ' is one of favorites.';
+    fav_image.src = DBHelper.favoriteIconURL();
+  } else {
+    fav_image.alt = restaurant.name + ' is not one of favorites.';
+    fav_image.src = DBHelper.unfavoriteIconURL();
+  }
+  fav_image.id = "list-fav-image-" + restaurant.id;
+  li.append(fav_image);
+  fav_image.onclick = event => handleFavoriteClick(restaurant, !restaurant.is_favorite);
 
   const neighborhood = document.createElement('p');
   neighborhood.innerHTML = restaurant.neighborhood;
@@ -174,6 +188,7 @@ function createRestaurantHTML(restaurant) {
   const address = document.createElement('p');
   address.innerHTML = restaurant.address;
   li.append(address);
+
 
   const more = document.createElement('button');
   more.innerHTML = 'View Details';
@@ -211,4 +226,14 @@ function addMarkersToMap(restaurants = self.restaurants) {
     self.markers.push(marker);
   });
 }
+
+const handleFavoriteClick = (restaurant, newState) => {
+  // Update properties of the restaurant data object
+  console.log("list-fav-image-" + restaurant.id);
+  const favorite = document.getElementById("list-fav-image-" + restaurant.id);
+  restaurant["is_favorite"] = newState;
+  var imageId = "list-fav-image-";
+  DBHelper.handleFavoriteClick(imageId, restaurant.id, newState);
+  favorite.onclick = event => handleFavoriteClick(restaurant, !restaurant["is_favorite"]);
+};
 

@@ -1,6 +1,25 @@
 /**
  * Common database helper functions.
  */
+import idb from 'idb';
+
+var dbPromise = idb.open('mws-restaurants', 3, upgradeDb => {
+  switch (upgradeDb.oldVersion) {
+    case 0:
+      upgradeDb.createObjectStore("restaurants", { keyPath: "id" });
+    case 1:
+      {
+        const reviewsStore = upgradeDb.createObjectStore("reviews", { keyPath: "id" });
+        reviewsStore.createIndex("restaurant_id", "restaurant_id");
+      }
+    case 2:
+      upgradeDb.createObjectStore("pending", {
+        keyPath: "id",
+        autoIncrement: true
+      });
+  }
+})
+
 class DBHelper {
 
   /**
@@ -37,7 +56,6 @@ class DBHelper {
     fetch(DBHelper.DATABASE_URL + '/' + id)
       .then(response => response.json())
       .then((restaurant) => {
-
         fetch(DBHelper.DATABASE_URL_REVIEW + '/?restaurant_id=' + id)
           .then(response => response.json())
           .then((reviews) => {
@@ -165,19 +183,14 @@ class DBHelper {
     return (`/images/${restaurant.photograph}-800_large.jpg`);
   }
 
-  /**
-   * Map marker for a restaurant.
-   */
-  //  static mapMarkerForRestaurant(restaurant, map) {
-  //   // https://leafletjs.com/reference-1.3.0.html#marker  
-  //   const marker = new L.marker([restaurant.latlng.lat, restaurant.latlng.lng],
-  //     {title: restaurant.name,
-  //     alt: restaurant.name,
-  //     url: DBHelper.urlForRestaurant(restaurant)
-  //     })
-  //     marker.addTo(newMap);
-  //   return marker;
-  // } 
+  static favoriteIconURL() {
+    return (`/images/star-yellow.svg`);
+  }
+
+  static unfavoriteIconURL() {
+    return (`/images/star.svg`);
+  }
+
   static mapMarkerForRestaurant(restaurant, map) {
     const marker = new google.maps.Marker({
       position: restaurant.latlng,
@@ -190,5 +203,224 @@ class DBHelper {
     return marker;
   }
 
+  static saveReview(id, name, rating, comment, callback) {
+    const btn = document.getElementById("button");
+    btn.onclick = null;
+
+    const body = {
+      restaurant_id: id,
+      name: name,
+      rating: rating,
+      comments: comment,
+      createdAt: Date.now()
+    }
+
+    console.log("updating reviews database for new review: ", body);
+
+    dbPromise.then(db => {
+      const tx = db.transaction("reviews", "readwrite");
+      const store = tx.objectStore("reviews");
+      console.log("putting new review into store");
+      store.put({
+        id: Date.now(),
+        "restaurant_id": id,
+        data: body
+      });
+      console.log("new review saved into database!");
+    });
+
+    const url = `${DBHelper.DATABASE_URL_REVIEW}`;
+    const method = "POST";
+    DBHelper.createPendingRequest(url, method, body);
+
+    callback(null, null);
+  }
+
+  static createPendingRequest(url, method, body) {
+    console.log("saving to pending database");
+    dbPromise.then(db => {
+      const tx = db.transaction("pending", "readwrite");
+      tx.objectStore("pending")
+        .put({
+          data: {
+            url,
+            method,
+            body
+          }
+        })
+    }).catch(error => { })
+      .then(() => {
+        console.log("saved to pending database");
+        DBHelper.attemptCommitPending(DBHelper.nextPending);
+      });
+  }
+
+  static nextPending() {
+    //iterate over all pending data
+    DBHelper.attemptCommitPending(DBHelper.nextPending);
+  }
+
+  static attemptCommitPending(callback) {
+    console.log("attemptCommitPending")
+    let url;
+    let method;
+    let body;
+
+    dbPromise.then(db => {
+      if (!db.objectStoreNames.length) {
+        console.log("DB not available");
+        db.close();
+        return;
+      }
+
+      const tx = db.transaction("pending", "readwrite");
+      tx
+        .objectStore("pending")
+        .openCursor()
+        .then(cursor => {
+          if (!cursor) {
+            return;
+          }
+
+          console.log("cursor", cursor);
+          const value = cursor.value;
+          url = cursor.value.data.url;
+          method = cursor.value.data.method;
+          body = cursor.value.data.body;
+
+          if ((!url || !method) || (method === "POST" && !body)) {
+            // bad record so delete it!
+            cursor
+              .delete()
+              .then(callback());
+            return;
+          };
+
+          const properties = {
+            body: JSON.stringify(body),
+            method: method
+          }
+          console.log("sending post from queue: ", properties);
+          console.log("fetching");
+          fetch(url, properties)
+            .then(response => {
+              if (!response.ok && !response.redirected) {
+                console.log("offline");
+                return;
+              }
+            })
+            .then(() => {
+              const tx_pending = db.transaction("pending", "readwrite");
+              tx_pending.objectStore("pending")
+                .openCursor()
+                .then(cursor => {
+                  cursor
+                    .delete()
+                    .then(() => {
+                      callback();
+                    })
+                })
+              console.log("deleted pending item from queue");
+            })
+        })
+        .catch(error => {
+          console.log("Error reading cursor");
+          return;
+        })
+    })
+  }
+
+  static handleFavoriteClick(imageId, id, newState) {
+    // Block any more clicks on this until the callback
+    console.log("imageId " + imageId);
+    console.log("id " + id);
+    const fav = document.getElementById(imageId + id);
+    fav.onclick = null;
+
+    DBHelper.updateFavorite(id, newState, (error, resultObj) => {
+      if (error) {
+        console.log("Error updating favorite");
+        return;
+      }
+      // Update the button background for the specified favorite
+      const favorite = document.getElementById(imageId + resultObj.id);
+      favorite.src = resultObj.value
+        ? DBHelper.favoriteIconURL()
+        : DBHelper.unfavoriteIconURL();
+    });
+  }
+
+  static updateFavorite(id, newState, callback) {
+    const url = `${DBHelper.DATABASE_URL}/${id}/?is_favorite=${newState}`;
+    const method = "PUT";
+    DBHelper.updateCachedRestaurant(id, { "is_favorite": newState });
+    DBHelper.createPendingRequest(url, method, null);
+
+    callback(null, { id, value: newState });
+  }
+
+  static updateCachedRestaurant(id, updateObj) {
+
+    // restaurant
+    dbPromise.then(db => {
+      db.transaction("restaurants", "readwrite")
+        .objectStore("restaurants")
+        .get(id + "")
+        .then(value => {
+          if (!value) {
+            console.log("No cached data found");
+            return;
+          }
+          const restaurantObj = value.data;
+          if (!restaurantObj)
+            return;
+          const keys = Object.keys(updateObj);
+          keys.forEach(k => {
+            restaurantObj[k] = updateObj[k];
+          })
+
+          dbPromise.then(db => {
+            db.transaction("restaurants", "readwrite")
+              .objectStore("restaurants")
+              .put({ id: id + "", data: restaurantObj });
+            return tx.complete;
+          })
+        })
+    });
+
+    //-1 all restaurants
+    dbPromise.then(db => {
+      console.log("Getting db transaction");
+      db.transaction("restaurants", "readwrite")
+        .objectStore("restaurants")
+        .get("-1")
+        .then(value => {
+          if (!value) {
+            console.log("No cached data found");
+            return;
+          }
+          const data = value.data;
+          const restaurantArr = data.filter(r => r.id === id);
+          const restaurantObj = restaurantArr[0];
+
+          if (!restaurantObj)
+            return;
+          const keys = Object.keys(updateObj);
+          keys.forEach(k => {
+            restaurantObj[k] = updateObj[k];
+          })
+
+          dbPromise.then(db => {
+            db.transaction("restaurants", "readwrite")
+              .objectStore("restaurants")
+              .put({ id: "-1", data: data });
+            return tx.complete;
+          })
+        })
+    });
+
+  }
 }
+
+window.DBHelper = DBHelper;
 

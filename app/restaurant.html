@@ -14,7 +14,15 @@
 
   <title>Restaurant Info</title>
 </head>
+<script type="text/javascript" src="scripts/register.js"></script>
+<script type="text/javascript" src="sw.js"></script>
 
+<script type="text/javascript" src="scripts/restaurant_info.js"></script>
+<!-- Google Maps -->
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb39XqJKBTDU7M9zXMctKaazu6pLtCINs&libraries=places&callback=initMap"></script>
+
+<script type="text/javascript" src="scripts/dbhelper.js"></script>
 <body class="inside">
   <!-- Beginning header -->
   <header>
@@ -41,6 +49,7 @@
   <div id="maincontent-details">
     <!-- Beginning restaurant -->
     <div id="restaurant-container">
+      <div id="fav-img"></div>
       <h2 id="restaurant-name"></h2>
       <img id="restaurant-img">
       <p id="restaurant-cuisine"></p>
@@ -56,22 +65,22 @@
     <!-- Beginning reviews -->
     <div id="reviews-container">
       <h3>Reviews</h3>
-      <form id="foo" >
-        <input id="restaurant_id" type="hidden" name="restaurant_id">
-        <label for="name">Name: </label>
-        <input id="name" type="text" name="name">
+      <!-- <form id="foo" > -->
+      <input id="restaurant_id" type="hidden" name="restaurant_id">
+      <label for="name">Name: </label>
+      <input id="name" type="text" name="name">
 
-        <br>
-        <label for="rating">Rating: </label>
-        <input id="rating" type="number" name="rating">
+      <br>
+      <label for="rating">Rating: </label>
+      <input id="rating" type="number" name="rating">
 
-        <br>
-        <label for="comment">Comment: </label>
-        <textarea id="comment" type="text" name="comments"></textarea>
+      <br>
+      <label for="comment">Comment: </label>
+      <textarea id="comment" type="text" name="comments"></textarea>
 
-        <br>
-        <button id="button" type="submit" onclick="saveReview()">Save</button>
-      </form>
+      <br>
+      <button id="button" onclick="saveReview()">Save</button>
+      <!-- </form> -->
       <ul id="reviews-list"></ul>
     </div>
     <!-- End reviews -->
@@ -91,15 +100,7 @@
     <!-- Beginning scripts -->
     <!-- Database helpers -->
     <!-- Main javascript file -->
-    <script type="text/javascript" src="scripts/register.js"></script>
-    <script type="text/javascript" src="sw.js"></script>
-
-    <script type="text/javascript" src="scripts/restaurant_info.js"></script>
-    <!-- Google Maps -->
-
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBb39XqJKBTDU7M9zXMctKaazu6pLtCINs&libraries=places&callback=initMap"></script>
-
-    <script type="text/javascript" src="scripts/dbhelper.js"></script>
+   
 
     <!-- End scripts -->
 

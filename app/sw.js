@@ -24,7 +24,7 @@ var dbPromise = idb.open('mws-restaurants', 3, upgradeDb => {
                 reviewsStore.createIndex("restaurant_id", "restaurant_id");
             }
         case 2:
-            upgradeDb.createObjectStore("pendingReviews", {
+            upgradeDb.createObjectStore("pending", {
                 keyPath: "id",
                 autoIncrement: true
             });
@@ -33,6 +33,7 @@ var dbPromise = idb.open('mws-restaurants', 3, upgradeDb => {
 
 // The install handler takes care of precaching the resources we always need.
 self.addEventListener('install', event => {
+    // console.log("cache install");
     event.waitUntil(
         caches.open(PRECACHE)
             .then(cache => cache.addAll(PRECACHE_URLS))
@@ -42,6 +43,8 @@ self.addEventListener('install', event => {
 
 // The activate handler takes care of cleaning up old caches.
 self.addEventListener('activate', event => {
+    // console.log("cache activate");
+
     const currentCaches = [PRECACHE, RUNTIME];
     event.waitUntil(
         caches.keys().then(cacheNames => {
@@ -60,110 +63,108 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
     var requestUrl = new URL(event.request.url);
 
+    // console.log('requestUrl: ' + requestUrl);
     if (requestUrl.port === "1337") {
-        console.log('requestUrl: ' + requestUrl);
 
         if (event.request.method !== "GET") {
+            console.log("SW FETCH");
             return fetch(event.request)
                 .then(fetchResponse => fetchResponse.json())
                 .then(json => {
                     return json
                 });
-        }
+        } else {
+            if (requestUrl.pathname.indexOf("reviews") !== -1) {
+                const parts = requestUrl.pathname.split("/");
+                const restaurant_id = parts[parts.length - 1] === "reviews" ? "-1" : requestUrl.searchParams.get("restaurant_id");
+                event.respondWith(
+                    dbPromise.then(db => {
+                        var tx = db.transaction('reviews');
+                        var reviewsStore = tx.objectStore('reviews');
+                        return reviewsStore.index("restaurant_id").getAll(parseInt(restaurant_id));
+                    }).then(data => {
+                        console.log("data(" + restaurant_id + "): " + data);
+                        if (data !== null && data.length > 0) {
+                            const mapResponse = data.map(review => review.data);
+                            return mapResponse;
+                        }
+                        else {
+                            return fetch(event.request)
+                                .then(fetchResponse => fetchResponse.json())
+                                .then(json => {
+                                    console.log(json);
+                                    return dbPromise.then(db => {
 
-        if (requestUrl.pathname.indexOf("reviews") !== -1) {
-            const parts = requestUrl.pathname.split("/");
-            const restaurant_id = parts[parts.length - 1] === "reviews" ? "-1" : requestUrl.searchParams.get("restaurant_id");
-            console.log('restaurant_id: ' + restaurant_id);
-            event.respondWith(
-                dbPromise.then(db => {
-                    var tx = db.transaction('reviews');
-                    var reviewsStore = tx.objectStore('reviews');
-                    return reviewsStore.index("restaurant_id").getAll(restaurant_id);
-                }).then(data => {
-                    console.log("data(" + restaurant_id + "): " + data);
-                    if (data !== null && data.length > 0) {
-                        console.log("data from database: " + data);
-                        const mapResponse = data.map(review => review.data);
-                        return mapResponse;
-                    }
-                    else {
-                        return fetch(event.request)
+                                        const tx = db.transaction("reviews", "readwrite");
+                                        var reviewsStore = tx.objectStore('reviews');
+
+                                        var i;
+                                        for (i = 0; i < json.length; i++) {
+                                            reviewsStore.put({
+                                                id: json[i].id + "",
+                                                restaurant_id: json[i]["restaurant_id"],
+                                                data: json[i]
+                                            });
+                                        }
+
+                                        return json;
+                                    });
+                                });
+                        }
+                    }).then(finalResponse => {
+                        return new Response(JSON.stringify(finalResponse));
+                    }).catch(error => {
+                        return new Response("Error fetching data", { status: 500 });
+                    }));
+            } else {
+                const parts = requestUrl.pathname.split("/");
+                const id = parts[parts.length - 1] === "restaurants" ? "-1" : parts[parts.length - 1];
+                // console.log('id: ' + id);
+                event.respondWith(
+                    dbPromise.then(db => {
+                        var tx = db.transaction('restaurants');
+                        var restaurantsStore = tx.objectStore('restaurants');
+                        return restaurantsStore.get(id);
+                    }).then(data => {
+                        return ((data && data.data) || fetch(event.request)
                             .then(fetchResponse => fetchResponse.json())
                             .then(json => {
                                 console.log(json);
                                 return dbPromise.then(db => {
 
-                                    const tx = db.transaction("reviews", "readwrite");
-                                    var reviewsStore = tx.objectStore('reviews');
-
-                                    var i;
-                                    for (i = 0; i < json.length; i++) {
-                                        reviewsStore.put({
-                                            id: json[i].id + "",
-                                            restaurant_id: json[i]["restaurant_id"],
-                                            data: json[i]
-                                        });
+                                    const tx = db.transaction("restaurants", "readwrite");
+                                    var restaurantsStore = tx.objectStore('restaurants');
+                                    restaurantsStore.put({
+                                        id: id,
+                                        data: json
+                                    });
+                                    if (id == -1) {
+                                        var i;
+                                        for (i = 0; i < json.length; i++) {
+                                            restaurantsStore.put({
+                                                id: json[i].id + "",
+                                                data: json[i]
+                                            });
+                                        }
                                     }
-
                                     return json;
                                 });
-                            });
-                    }
-                }).then(finalResponse => {
-                    console.log("final response: " + finalResponse)
-                    return new Response(JSON.stringify(finalResponse));
-                }).catch(error => {
-                    console.log("error: " + error);
-                    return new Response("Error fetching data", { status: 500 });
-                }));
-        } else {
-            const parts = requestUrl.pathname.split("/");
-            const id = parts[parts.length - 1] === "restaurants" ? "-1" : parts[parts.length - 1];
-            // console.log('id: ' + id);
-            event.respondWith(
-                dbPromise.then(db => {
-                    var tx = db.transaction('restaurants');
-                    var restaurantsStore = tx.objectStore('restaurants');
-                    return restaurantsStore.get(id);
-                }).then(data => {
-                    console.log("data(" + id + "): " + data);
-                    return ((data && data.data) || fetch(event.request)
-                        .then(fetchResponse => fetchResponse.json())
-                        .then(json => {
-                            console.log(json);
-                            return dbPromise.then(db => {
-
-                                const tx = db.transaction("restaurants", "readwrite");
-                                var restaurantsStore = tx.objectStore('restaurants');
-                                restaurantsStore.put({
-                                    id: id,
-                                    data: json
-                                });
-                                if (id == -1) {
-                                    var i;
-                                    for (i = 0; i < json.length; i++) {
-                                        restaurantsStore.put({
-                                            id: json[i].id + "",
-                                            data: json[i]
-                                        });
-                                    }
-                                }
-                                return json;
-                            });
-                        })
-                    );
-                }).then(finalResponse => {
-                    return new Response(JSON.stringify(finalResponse));
-                }).catch(error => {
-                    return new Response("Error fetching data", { status: 500 });
-                }));
+                            })
+                        );
+                    }).then(finalResponse => {
+                        return new Response(JSON.stringify(finalResponse));
+                    }).catch(error => {
+                        return new Response("Error fetching data", { status: 500 });
+                    }));
+            }
         }
-
     } else {
+
         if (requestUrl.origin === location.origin) {
             if (requestUrl.pathname === '/') {
-                event.respondWith(caches.match('/index.html'))
+                event.respondWith(caches.match('/index.html').then(response => {
+                    return (response || fetch(event.request))
+                }));
                 return;
             }
             if (requestUrl.pathname.startsWith('/images/')) {
@@ -171,7 +172,9 @@ self.addEventListener('fetch', event => {
                 return;
             }
             if (requestUrl.pathname.startsWith('/restaurant.html')) {
-                event.respondWith(caches.match('/restaurant.html'))
+                event.respondWith(caches.match('/restaurant.html').then(response => {
+                    return (response || fetch(event.request))
+                }));
                 return;
             }
         }

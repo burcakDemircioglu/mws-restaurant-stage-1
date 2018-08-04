@@ -181,6 +181,19 @@ nav h1 a {
   min-width: 100%;
   overflow: hidden;
 }
+
+.fav-icon {
+  display: block;
+  margin: 5px;
+  max-width: 48px;
+  min-width: 48px;
+  overflow: hidden;
+}
+
+#restaurants-list .fav-icon {
+  float:right;
+}
+
 #restaurants-list li h3 {
   color: #a35700;
   font-family: Arial,sans-serif;

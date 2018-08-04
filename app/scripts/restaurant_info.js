@@ -61,7 +61,7 @@ function fetchRestaurantFromURL(callback) {
   }
   const id = getParameterByName('id');
   if (!id) { // no id found in URL
-    error = 'No restaurant id in URL'
+    var error = 'No restaurant id in URL';
     callback(error, null);
   } else {
     DBHelper.fetchRestaurantById(id, (error, restaurant) => {
@@ -82,6 +82,20 @@ function fetchRestaurantFromURL(callback) {
 function fillRestaurantHTML(restaurant = self.restaurant) {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
+
+  const fav_imageDiv = document.getElementById('fav-img');
+  const fav_image = document.createElement('img');
+  fav_image.className = 'fav-icon';
+  if (restaurant.is_favorite) {
+    fav_image.alt = restaurant.name + ' is one of favorites.';
+    fav_image.src = DBHelper.favoriteIconURL();
+  } else {
+    fav_image.alt = restaurant.name + ' is not one of favorites.';
+    fav_image.src = DBHelper.unfavoriteIconURL();
+  }
+  fav_image.id = "fav-image-" + restaurant.id;
+  fav_imageDiv.append(fav_image);
+  fav_image.onclick = event => handleFavoriteClick(restaurant.id, !restaurant.is_favorite);
 
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
@@ -170,7 +184,7 @@ function createReviewHTML(review) {
   const date = document.createElement('p');
   date.className = 'review-date';
   var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' };
-  date.innerHTML = new Date(review.updatedAt).toLocaleDateString("en-US", options);
+  date.innerHTML = new Date(review.createdAt).toLocaleDateString("en-US", options);
   div.appendChild(date);
 
   li.appendChild(div);
@@ -232,6 +246,16 @@ const saveReview = () => {
     const btn = document.getElementById("button");
     btn.onclick = event => saveReview();
 
-    window.location.href = "/restaurant.html?id=" + self.restaurant.id;
+    // window.location.href = "/restaurant.html?id=" + self.restaurant.id;
   });
+
 }
+const handleFavoriteClick = (id, newState) => {
+  // Update properties of the restaurant data object
+  console.log("fav-image-" + id);
+  const favorite = document.getElementById("fav-image-" + id);
+  self.restaurant["is_favorite"] = newState;
+  var imageId = "fav-image-";
+  DBHelper.handleFavoriteClick(imageId, id, newState);
+  favorite.onclick = event => handleFavoriteClick(restaurant.id, !self.restaurant["is_favorite"]);
+};
