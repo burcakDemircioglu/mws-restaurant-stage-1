@@ -1,3 +1,13 @@
+# Notes For The Reviewer:
+Please follow these steps to run the project:
+
+1. Start the server in the udacity provided project 3 on [git ](https://github.com/udacity/mws-restaurant-stage-3).
+2. Open a terminal and navigate to this project.
+3. Run `npm install` command to get the dependendies.
+3. Run `gulp serve` command to run the project.
+4. On browser visit `http://localhost:9000/`.
+
+
 # Mobile Web Specialist Certification Course
 ---
 #### _Three Stage Course Material Project - Restaurant Reviews_
