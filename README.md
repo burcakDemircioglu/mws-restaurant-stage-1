@@ -1,11 +1,15 @@
 # Notes For The Reviewer:
 Please follow these steps to run the project:
 
-1. Start the server in the udacity provided project 3 on [git ](https://github.com/udacity/mws-restaurant-stage-3).
-2. Open a terminal and navigate to this project.
-3. Run `npm install` command to get the dependendies.
-3. Run `gulp serve` command to run the project.
-4. On browser visit `http://localhost:9000/`.
+1. If you don't already installed please install [node.js](https://nodejs.org/en/download/) and [npm](https://www.npmjs.com/get-npm).
+2. Start the server in the udacity provided project 3 on [git ](https://github.com/udacity/mws-restaurant-stage-3).
+3. Open a terminal and navigate to this project.
+4. Run `npm install` command to get the dependendies.
+5. Run `npm install browserify` command to get browserify.
+6. Run `npm install babelify` command to get babelify.
+7. Run `npm install vinyl-source-stream` command to get vinyl-source-stream.
+5. Run `gulp serve` command to run the project.
+6. On browser visit `http://localhost:9000/`.
 
 
 # Mobile Web Specialist Certification Course
