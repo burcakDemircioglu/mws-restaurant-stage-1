@@ -183,14 +183,6 @@ class DBHelper {
     return (`/images/${restaurant.photograph}-800_large.jpg`);
   }
 
-  static favoriteIconURL() {
-    return (`/images/star-yellow.svg`);
-  }
-
-  static unfavoriteIconURL() {
-    return (`/images/star.svg`);
-  }
-
   static mapMarkerForRestaurant(restaurant, map) {
     const marker = new google.maps.Marker({
       position: restaurant.latlng,
@@ -330,10 +322,8 @@ class DBHelper {
     })
   }
 
-  static handleFavoriteClick(imageId, id, newState) {
+  static handleFavoriteClick(imageId, id, restaurant, newState) {
     // Block any more clicks on this until the callback
-    console.log("imageId " + imageId);
-    console.log("id " + id);
     const fav = document.getElementById(imageId + id);
     fav.onclick = null;
 
@@ -344,9 +334,15 @@ class DBHelper {
       }
       // Update the button background for the specified favorite
       const favorite = document.getElementById(imageId + resultObj.id);
-      favorite.src = resultObj.value
-        ? DBHelper.favoriteIconURL()
-        : DBHelper.unfavoriteIconURL();
+      if (resultObj.value) {
+        favorite.setAttribute('aria-label', "unselect " + restaurant.name + " as favorite");
+        favorite.alt = restaurant.name + ' is one of favorites.';
+        favorite.style.background = "url('/images/star-yellow.svg') no-repeat";
+      } else {
+        favorite.setAttribute('aria-label', "select " + restaurant.name + " as favorite");
+        favorite.alt = restaurant.name + ' is not one of favorites.';
+        favorite.style.background = "url('/images/star.svg') no-repeat";
+      }
     });
   }
 
@@ -363,8 +359,8 @@ class DBHelper {
 
     // restaurant
     dbPromise.then(db => {
-      db.transaction("restaurants", "readwrite")
-        .objectStore("restaurants")
+      var tx = db.transaction("restaurants", "readwrite");
+      tx.objectStore("restaurants")
         .get(id + "")
         .then(value => {
           if (!value) {
@@ -391,8 +387,8 @@ class DBHelper {
     //-1 all restaurants
     dbPromise.then(db => {
       console.log("Getting db transaction");
-      db.transaction("restaurants", "readwrite")
-        .objectStore("restaurants")
+      var tx = db.transaction("restaurants", "readwrite");
+      tx.objectStore("restaurants")
         .get("-1")
         .then(value => {
           if (!value) {

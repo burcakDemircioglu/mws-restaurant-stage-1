@@ -47,6 +47,26 @@ article, aside, canvas, details, figcaption, figure, footer, header, hgroup, men
   text-align: center;
   text-transform: uppercase;
 }
+
+button {
+  color: #fff;
+  display: inline-block;
+  font-size: 14pt;
+  margin: 15px 0 0;
+  padding: 8px 30px 10px;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  width: 100%;
+  min-width:48px;
+  min-height:48px;
+  border: 0px;
+  outline: none;
+}
+
+.detailsButton {
+  background-color: #333;
+}
 /* ====================== Navigation ====================== */
 nav {
   width: 100%;

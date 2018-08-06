@@ -83,19 +83,19 @@ function fillRestaurantHTML(restaurant = self.restaurant) {
   const name = document.getElementById('restaurant-name');
   name.innerHTML = restaurant.name;
 
-  const fav_imageDiv = document.getElementById('fav-img');
-  const fav_image = document.createElement('img');
-  fav_image.className = 'fav-icon';
+  const fav_button = document.getElementById('fav-button');
+  fav_button.className = 'fav-icon';
   if (restaurant.is_favorite) {
-    fav_image.alt = restaurant.name + ' is one of favorites.';
-    fav_image.src = DBHelper.favoriteIconURL();
+    fav_button.setAttribute('aria-label', "unselect " + restaurant.name + " as favorite");
+    fav_button.alt = restaurant.name + ' is one of favorites.';
+    fav_button.style.background = "url('/images/star-yellow.svg') no-repeat";
   } else {
-    fav_image.alt = restaurant.name + ' is not one of favorites.';
-    fav_image.src = DBHelper.unfavoriteIconURL();
+    fav_button.setAttribute('aria-label', "select " + restaurant.name + " as favorite");
+    fav_button.alt = restaurant.name + ' is not one of favorites.';
+    fav_button.style.background = "url('/images/star.svg') no-repeat";
   }
-  fav_image.id = "fav-image-" + restaurant.id;
-  fav_imageDiv.append(fav_image);
-  fav_image.onclick = event => handleFavoriteClick(restaurant.id, !restaurant.is_favorite);
+  fav_button.id = "fav-image-" + restaurant.id;
+  fav_button.onclick = event => handleFavoriteClick(restaurant.id, !restaurant.is_favorite);
 
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
@@ -256,6 +256,6 @@ const handleFavoriteClick = (id, newState) => {
   const favorite = document.getElementById("fav-image-" + id);
   self.restaurant["is_favorite"] = newState;
   var imageId = "fav-image-";
-  DBHelper.handleFavoriteClick(imageId, id, newState);
+  DBHelper.handleFavoriteClick(imageId, id, restaurant, newState);
   favorite.onclick = event => handleFavoriteClick(restaurant.id, !self.restaurant["is_favorite"]);
 };

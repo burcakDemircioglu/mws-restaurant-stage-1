@@ -81,24 +81,9 @@
     margin: 0;
     font-size: 14pt;
   }
-  #restaurants-list li button {
-    background-color: #333;
-    /* border-bottom: 3px solid #eee; */
-    color: #fff;
-    display: inline-block;
-    font-size: 14pt;
-    margin: 15px 0 0;
-    padding: 8px 30px 10px;
-    text-align: center;
-    text-decoration: none;
-    text-transform: uppercase;
-    width: 100%;
-    min-width:48px;
-    min-height:48px;
-  }
   
-  #restaurants-list li button:hover,
-  #restaurants-list li button:focus {
+  #restaurants-list li .detailsButton:hover,
+  #restaurants-list li .detailsButton:focus {
     background: #f18200;
     color: #FFFFFF;
     text-decoration: underline;
