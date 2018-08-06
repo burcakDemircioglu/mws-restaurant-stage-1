@@ -48,7 +48,7 @@ article, aside, canvas, details, figcaption, figure, footer, header, hgroup, men
   text-transform: uppercase;
 }
 
-button {
+.detailsButton {
   color: #fff;
   display: inline-block;
   font-size: 14pt;
@@ -62,9 +62,6 @@ button {
   min-height:48px;
   border: 0px;
   outline: none;
-}
-
-.detailsButton {
   background-color: #333;
 }
 /* ====================== Navigation ====================== */
@@ -93,7 +90,18 @@ nav h1 a {
 }
 
 .fav-icon {
-  display: block;
+  color: #fff;
+  display: inline-block;
+  font-size: 14pt;
+  padding: 8px 30px 10px;
+  text-align: center;
+  text-decoration: none;
+  text-transform: uppercase;
+  width: 100%;
+  min-width:48px;
+  min-height:48px;
+  border: 0px;
+  outline: none;
   margin: 5px;
   max-width: 48px;
   min-width: 48px;
