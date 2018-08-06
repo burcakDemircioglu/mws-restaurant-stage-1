@@ -1,8 +1,4 @@
 dist
 .tmp
-!node_modules/
-node_modules/*
-!node_modules/browserify
-!node_modules/babelify
-!node_modules/vinyl-source-stream
+node_modules/
 
