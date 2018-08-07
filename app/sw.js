@@ -13,21 +13,22 @@ const PRECACHE_URLS = [
     '/styles/base.css',
     '/scripts/main.js',
     '/scripts/dbhelper.js',
-    '/scripts/restaurant_info.js'
+    '/scripts/restaurant_info.js',
+    '/images/star.svg',
+    '/images/star-yellow.svg'
 ];
 
 var dbPromise = idb.open('mws-restaurants', 3, upgradeDb => {
     switch (upgradeDb.oldVersion) {
         case 0:
-            upgradeDb.createObjectStore("restaurants", { keyPath: "id" });
-        case 1:
-            {
-                const reviewsStore = upgradeDb.createObjectStore("reviews", { keyPath: "id" });
-                reviewsStore.createIndex("restaurant_id", "restaurant_id");
-            }
+            upgradeDb.createObjectStore('restaurants', {keyPath: 'id'});
+        case 1: {
+            const reviewsStore = upgradeDb.createObjectStore('reviews', {keyPath: 'id'});
+            reviewsStore.createIndex('restaurant_id', 'restaurant_id');
+        }
         case 2:
-            upgradeDb.createObjectStore("pending", {
-                keyPath: "id",
+            upgradeDb.createObjectStore('pending', {
+                keyPath: 'id',
                 autoIncrement: true
             });
     }
@@ -66,26 +67,26 @@ self.addEventListener('fetch', event => {
     var requestUrl = new URL(event.request.url);
 
     // console.log('requestUrl: ' + requestUrl);
-    if (requestUrl.port === "1337") {
+    if (requestUrl.port === '1337') {
 
-        if (event.request.method !== "GET") {
-            console.log("SW FETCH");
+        if (event.request.method !== 'GET') {
+            console.log('SW FETCH');
             return fetch(event.request)
                 .then(fetchResponse => fetchResponse.json())
                 .then(json => {
                     return json
                 });
         } else {
-            if (requestUrl.pathname.indexOf("reviews") !== -1) {
-                const parts = requestUrl.pathname.split("/");
-                const restaurant_id = parts[parts.length - 1] === "reviews" ? "-1" : requestUrl.searchParams.get("restaurant_id");
+            if (requestUrl.pathname.indexOf('reviews') !== -1) {
+                const parts = requestUrl.pathname.split('/');
+                const restaurant_id = parts[parts.length - 1] === 'reviews' ? '-1' : requestUrl.searchParams.get('restaurant_id');
                 event.respondWith(
                     dbPromise.then(db => {
                         var tx = db.transaction('reviews');
                         var reviewsStore = tx.objectStore('reviews');
-                        return reviewsStore.index("restaurant_id").getAll(parseInt(restaurant_id));
+                        return reviewsStore.index('restaurant_id').getAll(parseInt(restaurant_id));
                     }).then(data => {
-                        console.log("data(" + restaurant_id + "): " + data);
+                        console.log('data(' + restaurant_id + '): ' + data);
                         if (data !== null && data.length > 0) {
                             const mapResponse = data.map(review => review.data);
                             return mapResponse;
@@ -97,14 +98,14 @@ self.addEventListener('fetch', event => {
                                     console.log(json);
                                     return dbPromise.then(db => {
 
-                                        const tx = db.transaction("reviews", "readwrite");
+                                        const tx = db.transaction('reviews', 'readwrite');
                                         var reviewsStore = tx.objectStore('reviews');
 
                                         var i;
                                         for (i = 0; i < json.length; i++) {
                                             reviewsStore.put({
-                                                id: json[i].id + "",
-                                                restaurant_id: json[i]["restaurant_id"],
+                                                id: json[i].id + '',
+                                                restaurant_id: json[i]['restaurant_id'],
                                                 data: json[i]
                                             });
                                         }
@@ -116,11 +117,11 @@ self.addEventListener('fetch', event => {
                     }).then(finalResponse => {
                         return new Response(JSON.stringify(finalResponse));
                     }).catch(error => {
-                        return new Response("Error fetching data", { status: 500 });
+                        return new Response('Error fetching data', {status: 500});
                     }));
             } else {
-                const parts = requestUrl.pathname.split("/");
-                const id = parts[parts.length - 1] === "restaurants" ? "-1" : parts[parts.length - 1];
+                const parts = requestUrl.pathname.split('/');
+                const id = parts[parts.length - 1] === 'restaurants' ? '-1' : parts[parts.length - 1];
                 // console.log('id: ' + id);
                 event.respondWith(
                     dbPromise.then(db => {
@@ -129,56 +130,58 @@ self.addEventListener('fetch', event => {
                         return restaurantsStore.get(id);
                     }).then(data => {
                         return ((data && data.data) || fetch(event.request)
-                            .then(fetchResponse => fetchResponse.json())
-                            .then(json => {
-                                console.log(json);
-                                return dbPromise.then(db => {
+                                .then(fetchResponse => fetchResponse.json())
+                                .then(json => {
+                                    console.log(json);
+                                    return dbPromise.then(db => {
 
-                                    const tx = db.transaction("restaurants", "readwrite");
-                                    var restaurantsStore = tx.objectStore('restaurants');
-                                    restaurantsStore.put({
-                                        id: id,
-                                        data: json
-                                    });
-                                    if (id == -1) {
-                                        var i;
-                                        for (i = 0; i < json.length; i++) {
-                                            restaurantsStore.put({
-                                                id: json[i].id + "",
-                                                data: json[i]
-                                            });
+                                        const tx = db.transaction('restaurants', 'readwrite');
+                                        var restaurantsStore = tx.objectStore('restaurants');
+                                        restaurantsStore.put({
+                                            id: id,
+                                            data: json
+                                        });
+                                        if (id == -1) {
+                                            var i;
+                                            for (i = 0; i < json.length; i++) {
+                                                restaurantsStore.put({
+                                                    id: json[i].id + '',
+                                                    data: json[i]
+                                                });
+                                            }
                                         }
-                                    }
-                                    return json;
-                                });
-                            })
+                                        return json;
+                                    });
+                                })
                         );
                     }).then(finalResponse => {
                         return new Response(JSON.stringify(finalResponse));
                     }).catch(error => {
-                        return new Response("Error fetching data", { status: 500 });
+                        return new Response('Error fetching data', {status: 500});
                     }));
             }
         }
     } else {
 
         if (requestUrl.origin === location.origin) {
-            if (requestUrl.pathname === '/') {
-                event.respondWith(caches.match('/index.html').then(response => {
-                    return (response || fetch(event.request))
-                }));
-                return;
-            }
-            if (requestUrl.pathname.startsWith('/images/')) {
-                event.respondWith(servePhoto(event.request))
-                return;
-            }
+
+            var cacheURL = event.request;
             if (requestUrl.pathname.startsWith('/restaurant.html')) {
-                event.respondWith(caches.match('/restaurant.html').then(response => {
-                    return (response || fetch(event.request))
-                }));
-                return;
+                cacheURL = '/restaurant.html';
             }
+
+            event.respondWith(caches.open(PRECACHE).then(cache => {
+                return cache.match(cacheURL).then(response => {
+                    return (response) || fetch(event.request).then(networkResponse => {
+                        if (networkResponse.url.indexOf('browser-sync') === -1) {
+
+                            cache.put(cacheURL, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    });
+                });
+            }));
+            return;
         }
 
         event.respondWith(
@@ -189,18 +192,3 @@ self.addEventListener('fetch', event => {
     }
 
 });
-
-function servePhoto(request) {
-    var storageUrl = request.url.replace(/-\d+px\.jpg$/, '');
-
-    return caches.open(PRECACHE).then(cache => {
-        return cache.match(storageUrl).then(response => {
-            if (response) return response;
-
-            return fetch(request).then(networkResponse => {
-                cache.put(storageUrl, networkResponse.clone());
-                return networkResponse;
-            });
-        });
-    });
-}

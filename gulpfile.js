@@ -26,7 +26,7 @@ gulp.task('styles', () => {
 
 gulp.task('scripts', () => {
   return gulp
-    .src(["app/scripts/**/*.js", "!app/scripts/**/dbhelper.js"])
+    .src(['app/scripts/**/*.js', '!app/scripts/**/dbhelper.js'])
     .pipe($.plumber())
     .pipe($.if(dev, $.sourcemaps.init()))
     .pipe($.babel())
@@ -35,30 +35,30 @@ gulp.task('scripts', () => {
     .pipe(reload({ stream: true }));
 });
 
-gulp.task("sw", () => {
+gulp.task('sw', () => {
   const b = browserify({
     debug: true
   });
 
   return b
     .transform(babelify)
-    .require("app/sw.js", { entry: true })
+    .require('app/sw.js', { entry: true })
     .bundle()
-    .pipe(source("sw.js"))
+    .pipe(source('sw.js'))
     .pipe(gulp.dest('.tmp/'))
 })
 
-gulp.task("dbhelper", () => {
+gulp.task('dbhelper', () => {
   const b = browserify({
     debug: true
   });
 
   return b
     .transform(babelify)
-    .require("app/scripts/dbhelper.js", { entry: true })
+    .require('app/scripts/dbhelper.js', { entry: true })
     .bundle()
-    .pipe(source("dbhelper.js"))
-    .pipe(gulp.dest(".tmp/scripts/"));
+    .pipe(source('dbhelper.js'))
+    .pipe(gulp.dest('.tmp/scripts/'));
 });
 
 
